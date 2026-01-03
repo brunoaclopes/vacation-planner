@@ -127,12 +127,6 @@ export interface Translations {
     openaiKeyHelp: string;
     aiModel: string;
     refreshModels: string;
-    serverConfig: string;
-    serverConfigDesc: string;
-    backendPort: string;
-    backendPortHelp: string;
-    frontendPort: string;
-    frontendPortHelp: string;
     defaultYearConfig: string;
     defaultYearConfigDesc: string;
     defaultVacationDays: string;

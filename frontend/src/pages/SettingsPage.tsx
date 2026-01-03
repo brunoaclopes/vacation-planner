@@ -26,7 +26,6 @@ import {
   VisibilityOff as VisibilityOffIcon,
   Refresh as RefreshIcon,
   SmartToy as SmartToyIcon,
-  Computer as ComputerIcon,
   CalendarMonth as CalendarMonthIcon,
   LocationCity as LocationCityIcon,
   MenuBook as MenuBookIcon,
@@ -44,8 +43,6 @@ const SettingsPage: React.FC = () => {
     openai_api_key: '',
     ai_provider: 'github',
     ai_model: 'gpt-4o-mini',
-    backend_port: '8080',
-    frontend_port: '5173',
     default_work_week: JSON.stringify(['monday', 'tuesday', 'wednesday', 'thursday', 'friday']),
     default_vacation_days: '22',
     default_optimization_strategy: 'balanced',
@@ -259,53 +256,6 @@ const SettingsPage: React.FC = () => {
         </Grid>
 
         {/* Server Settings */}
-        <Grid item xs={12} md={6}>
-          <Paper 
-            elevation={0} 
-            sx={{ 
-              p: 3,
-              border: '1px solid',
-              borderColor: 'grey.200',
-              borderRadius: 3,
-              height: '100%',
-            }}
-          >
-            <Typography 
-              variant="h6" 
-              gutterBottom
-              sx={{ fontWeight: 600, color: 'text.primary', display: 'flex', alignItems: 'center', gap: 1 }}
-            >
-              <ComputerIcon fontSize="small" /> {t.settings.serverConfig}
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2.5 }}>
-              {t.settings.serverConfigDesc}
-            </Typography>
-
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
-              <TextField
-                label={t.settings.backendPort}
-                value={settings.backend_port}
-                onChange={(e) => handleChange('backend_port', e.target.value)}
-                helperText={t.settings.backendPortHelp}
-                size="small"
-                sx={{
-                  '& .MuiOutlinedInput-root': { borderRadius: 2 },
-                }}
-              />
-              <TextField
-                label={t.settings.frontendPort}
-                value={settings.frontend_port}
-                onChange={(e) => handleChange('frontend_port', e.target.value)}
-                helperText={t.settings.frontendPortHelp}
-                size="small"
-                sx={{
-                  '& .MuiOutlinedInput-root': { borderRadius: 2 },
-                }}
-              />
-            </Box>
-          </Paper>
-        </Grid>
-
         {/* Language Settings */}
         <Grid item xs={12} md={6}>
           <Paper 

@@ -90,8 +90,6 @@ export interface Settings {
   openai_api_key: string;
   ai_provider: string;
   ai_model: string;
-  backend_port: string;
-  frontend_port: string;
   default_work_week: string;
   default_vacation_days: string;
   default_optimization_strategy: string;
