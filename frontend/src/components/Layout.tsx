@@ -200,7 +200,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           </Typography>
           {version && (
             <Typography variant="caption" color="text.disabled" display="block" textAlign="center" sx={{ mt: 0.5 }}>
-              v{version}
+              v{version.replace(/^v/, '')}
             </Typography>
           )}
         </Box>
