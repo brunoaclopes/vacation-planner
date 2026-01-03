@@ -1,0 +1,16 @@
+# Binary
+server
+
+# Data
+data/
+*.db
+
+# IDE
+.idea
+.vscode
+
+# OS
+.DS_Store
+
+# Test
+*_test.go

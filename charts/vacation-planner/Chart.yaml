@@ -1,0 +1,17 @@
+apiVersion: v2
+name: vacation-planner
+description: A Portuguese vacation planner with AI-powered optimization
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+home: https://github.com/bruno.lopes/calendar
+keywords:
+  - vacation
+  - planner
+  - calendar
+  - portugal
+  - holidays
+maintainers:
+  - name: Bruno Lopes
+sources:
+  - https://github.com/bruno.lopes/calendar

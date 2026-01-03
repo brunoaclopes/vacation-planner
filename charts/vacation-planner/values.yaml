@@ -1,0 +1,66 @@
+# Default values for vacation-planner
+
+# Image settings
+image:
+  backend:
+    repository: ghcr.io/bruno-lopes/calendar-backend
+    tag: main
+    pullPolicy: IfNotPresent
+  frontend:
+    repository: ghcr.io/bruno-lopes/calendar-frontend
+    tag: main
+    pullPolicy: IfNotPresent
+
+# Service settings
+service:
+  type: ClusterIP
+  port: 80
+
+# Ingress settings (optional)
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: vacation-planner.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+# Persistence for SQLite database
+persistence:
+  enabled: true
+  size: 1Gi
+  storageClass: ""
+  accessMode: ReadWriteOnce
+  existingClaim: ""
+
+# Resource limits
+resources:
+  backend:
+    limits:
+      cpu: 500m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+  frontend:
+    limits:
+      cpu: 200m
+      memory: 128Mi
+    requests:
+      cpu: 50m
+      memory: 64Mi
+
+# Node selector
+nodeSelector: {}
+
+# Tolerations
+tolerations: []
+
+# Affinity
+affinity: {}
+
+# TrueNAS specific settings
+TZ: "Europe/Lisbon"

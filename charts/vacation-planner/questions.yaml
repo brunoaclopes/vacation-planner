@@ -1,0 +1,267 @@
+# TrueNAS SCALE Questions Configuration
+# This file defines the UI form for app installation
+
+groups:
+  - name: "Container Images"
+    description: "Image configuration"
+  - name: "Storage"
+    description: "Configure storage for the application"
+  - name: "Networking"
+    description: "Configure networking for the application"
+  - name: "Resources"
+    description: "Resource limits and requests"
+
+questions:
+  # Image Configuration
+  - variable: image
+    group: "Container Images"
+    label: "Container Images"
+    schema:
+      type: dict
+      attrs:
+        - variable: backend
+          label: "Backend Image"
+          schema:
+            type: dict
+            attrs:
+              - variable: repository
+                label: "Repository"
+                schema:
+                  type: string
+                  default: "ghcr.io/bruno-lopes/calendar-backend"
+              - variable: tag
+                label: "Tag"
+                schema:
+                  type: string
+                  default: "main"
+              - variable: pullPolicy
+                label: "Pull Policy"
+                schema:
+                  type: string
+                  default: "IfNotPresent"
+                  enum:
+                    - value: "IfNotPresent"
+                      description: "Only pull if not present"
+                    - value: "Always"
+                      description: "Always pull"
+                    - value: "Never"
+                      description: "Never pull"
+        - variable: frontend
+          label: "Frontend Image"
+          schema:
+            type: dict
+            attrs:
+              - variable: repository
+                label: "Repository"
+                schema:
+                  type: string
+                  default: "ghcr.io/bruno-lopes/calendar-frontend"
+              - variable: tag
+                label: "Tag"
+                schema:
+                  type: string
+                  default: "main"
+              - variable: pullPolicy
+                label: "Pull Policy"
+                schema:
+                  type: string
+                  default: "IfNotPresent"
+                  enum:
+                    - value: "IfNotPresent"
+                      description: "Only pull if not present"
+                    - value: "Always"
+                      description: "Always pull"
+                    - value: "Never"
+                      description: "Never pull"
+
+  # Storage Configuration
+  - variable: persistence
+    group: "Storage"
+    label: "Data Storage"
+    description: "Configure storage for the SQLite database"
+    schema:
+      type: dict
+      attrs:
+        - variable: enabled
+          label: "Enable Persistence"
+          schema:
+            type: boolean
+            default: true
+        - variable: size
+          label: "Storage Size"
+          schema:
+            type: string
+            default: "1Gi"
+            show_if: [["enabled", "=", true]]
+        - variable: storageClass
+          label: "Storage Class"
+          description: "Leave empty for default"
+          schema:
+            type: string
+            default: ""
+            show_if: [["enabled", "=", true]]
+        - variable: existingClaim
+          label: "Existing PVC"
+          description: "Use an existing PVC instead of creating one"
+          schema:
+            type: string
+            default: ""
+            show_if: [["enabled", "=", true]]
+
+  # Network Configuration
+  - variable: service
+    group: "Networking"
+    label: "Service Configuration"
+    schema:
+      type: dict
+      attrs:
+        - variable: type
+          label: "Service Type"
+          schema:
+            type: string
+            default: "LoadBalancer"
+            enum:
+              - value: "ClusterIP"
+                description: "ClusterIP (internal only)"
+              - value: "NodePort"
+                description: "NodePort"
+              - value: "LoadBalancer"
+                description: "LoadBalancer (recommended)"
+        - variable: port
+          label: "Port"
+          description: "Port to expose the application"
+          schema:
+            type: int
+            default: 80
+            min: 1
+            max: 65535
+
+  # Ingress Configuration
+  - variable: ingress
+    group: "Networking"
+    label: "Ingress Configuration"
+    schema:
+      type: dict
+      attrs:
+        - variable: enabled
+          label: "Enable Ingress"
+          schema:
+            type: boolean
+            default: false
+        - variable: hosts
+          label: "Hosts"
+          schema:
+            type: list
+            default: []
+            show_if: [["enabled", "=", true]]
+            items:
+              - variable: hostEntry
+                label: "Host Entry"
+                schema:
+                  type: dict
+                  attrs:
+                    - variable: host
+                      label: "Hostname"
+                      schema:
+                        type: string
+                        default: "vacation-planner.local"
+
+  # Timezone
+  - variable: TZ
+    group: "Container Images"
+    label: "Timezone"
+    description: "Timezone for the containers"
+    schema:
+      type: string
+      default: "Europe/Lisbon"
+      enum:
+        - value: "Europe/Lisbon"
+          description: "Europe/Lisbon"
+        - value: "Europe/London"
+          description: "Europe/London"
+        - value: "Europe/Paris"
+          description: "Europe/Paris"
+        - value: "America/New_York"
+          description: "America/New York"
+        - value: "America/Los_Angeles"
+          description: "America/Los Angeles"
+        - value: "UTC"
+          description: "UTC"
+
+  # Resource Limits
+  - variable: resources
+    group: "Resources"
+    label: "Resource Limits"
+    schema:
+      type: dict
+      attrs:
+        - variable: backend
+          label: "Backend Resources"
+          schema:
+            type: dict
+            attrs:
+              - variable: limits
+                label: "Limits"
+                schema:
+                  type: dict
+                  attrs:
+                    - variable: cpu
+                      label: "CPU Limit"
+                      schema:
+                        type: string
+                        default: "500m"
+                    - variable: memory
+                      label: "Memory Limit"
+                      schema:
+                        type: string
+                        default: "256Mi"
+              - variable: requests
+                label: "Requests"
+                schema:
+                  type: dict
+                  attrs:
+                    - variable: cpu
+                      label: "CPU Request"
+                      schema:
+                        type: string
+                        default: "100m"
+                    - variable: memory
+                      label: "Memory Request"
+                      schema:
+                        type: string
+                        default: "128Mi"
+        - variable: frontend
+          label: "Frontend Resources"
+          schema:
+            type: dict
+            attrs:
+              - variable: limits
+                label: "Limits"
+                schema:
+                  type: dict
+                  attrs:
+                    - variable: cpu
+                      label: "CPU Limit"
+                      schema:
+                        type: string
+                        default: "200m"
+                    - variable: memory
+                      label: "Memory Limit"
+                      schema:
+                        type: string
+                        default: "128Mi"
+              - variable: requests
+                label: "Requests"
+                schema:
+                  type: dict
+                  attrs:
+                    - variable: cpu
+                      label: "CPU Request"
+                      schema:
+                        type: string
+                        default: "50m"
+                    - variable: memory
+                      label: "Memory Request"
+                      schema:
+                        type: string
+                        default: "64Mi"

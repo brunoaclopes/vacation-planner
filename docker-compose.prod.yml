@@ -1,0 +1,42 @@
+# Docker Compose for registry-based deployment (TrueNAS, production)
+# Use this when images are pushed to a container registry
+
+services:
+  backend:
+    image: ghcr.io/bruno-lopes/calendar-backend:main
+    container_name: vacation-planner-backend
+    restart: unless-stopped
+    volumes:
+      - backend-data:/app/data
+    environment:
+      - GIN_MODE=release
+      - TZ=Europe/Lisbon
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  frontend:
+    image: ghcr.io/bruno-lopes/calendar-frontend:main
+    container_name: vacation-planner-frontend
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    environment:
+      - TZ=Europe/Lisbon
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - app-network
+
+volumes:
+  backend-data:
+
+networks:
+  app-network:
+    driver: bridge
