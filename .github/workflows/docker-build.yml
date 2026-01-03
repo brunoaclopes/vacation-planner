@@ -131,6 +131,15 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
             type=sha
 
+      - name: Set version
+        id: version
+        run: |
+          if [ "${{ github.ref_name }}" = "main" ]; then
+            echo "version=dev-$(echo ${{ github.sha }} | cut -c1-7)" >> $GITHUB_OUTPUT
+          else
+            echo "version=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+          fi
+
       - name: Build and push all-in-one image
         uses: docker/build-push-action@v5
         with:
@@ -139,6 +148,6 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
-            VERSION=${{ github.ref_name == 'main' && github.sha || github.ref_name }}
+            VERSION=${{ steps.version.outputs.version }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
