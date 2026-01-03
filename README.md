@@ -16,13 +16,36 @@ A monorepo application to optimize your vacation days around Portuguese holidays
 - 📊 Multiple year support with independent configurations
 - 🌍 Internationalization (English and Portuguese)
 
-## Getting Started
+## Quick Start with Docker
 
-### Using Docker (Recommended)
-
-The easiest way to run the application is using Docker:
+### Using Pre-built Image (Recommended)
 
 ```bash
+docker run -d \
+  --name vacation-planner \
+  -p 8080:80 \
+  -v vacation-planner-data:/app/data \
+  ghcr.io/brunoaclopes/vacation-planner:latest
+```
+
+The app will be available at http://localhost:8080
+
+### TrueNAS SCALE Deployment
+
+1. Go to **Apps** → **Discover Apps** → **Custom App**
+2. Configure:
+   - **Image**: `ghcr.io/brunoaclopes/vacation-planner:latest`
+   - **Port**: Map container port `80` to your desired host port (e.g., `8080`)
+   - **Storage**: Mount a host path or volume to `/app/data` for persistence
+3. Deploy and access at `http://TRUENAS_IP:8080`
+
+### Using Docker Compose
+
+```bash
+# Clone the repo
+git clone https://github.com/brunoaclopes/vacation-planner.git
+cd vacation-planner
+
 # Build and start containers
 docker compose up -d
 
@@ -33,7 +56,7 @@ docker compose logs -f
 docker compose down
 ```
 
-The app will be available at http://localhost:8080
+## Development Setup
 
 ### Using Make
 
@@ -78,6 +101,18 @@ make docker-clean   # Remove containers, images, and volumes
 
 Default ports:
 - Backend: 8080
-- Frontend: 5173 (dev) / 8080 (Docker)
+- Frontend: 5173 (dev) / 80 (Docker)
 
-These can be changed in the settings page.
+Data is stored in SQLite at `/app/data/vacation_planner.db`.
+
+## Docker Images
+
+| Image | Description |
+|-------|-------------|
+| `ghcr.io/brunoaclopes/vacation-planner:latest` | All-in-one (recommended) |
+| `ghcr.io/brunoaclopes/vacation-planner-backend:latest` | Backend only |
+| `ghcr.io/brunoaclopes/vacation-planner-frontend:latest` | Frontend only |
+
+## License
+
+MIT
