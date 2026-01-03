@@ -204,3 +204,13 @@ export const getAvailableCities = async (): Promise<string[]> => {
   const response = await api.get<string[]>('/cities');
   return response.data;
 };
+
+// Version
+export const getVersion = async (): Promise<string> => {
+  try {
+    const response = await api.get<{ version: string }>('/version');
+    return response.data.version;
+  } catch {
+    return import.meta.env.VITE_APP_VERSION || 'dev';
+  }
+};

@@ -1,18 +1,21 @@
 FROM golang:1.21-alpine AS backend-builder
 
+ARG VERSION=dev
 WORKDIR /app
 RUN apk add --no-cache gcc musl-dev
 COPY backend/go.mod backend/go.sum ./
 RUN go mod download
 COPY backend/ .
-RUN CGO_ENABLED=1 GOOS=linux go build -a -ldflags '-linkmode external -extldflags "-static"' -o server cmd/server/main.go
+RUN CGO_ENABLED=1 GOOS=linux go build -a -ldflags "-linkmode external -extldflags '-static' -X github.com/bruno.lopes/calendar/backend/internal/api.Version=${VERSION}" -o server cmd/server/main.go
 
 FROM node:20-alpine AS frontend-builder
 
+ARG VERSION=dev
 WORKDIR /app
 COPY frontend/package.json frontend/package-lock.json* ./
 RUN npm ci
 COPY frontend/ .
+ENV VITE_APP_VERSION=${VERSION}
 RUN npm run build
 
 FROM alpine:3.19

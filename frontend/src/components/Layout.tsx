@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
   AppBar,
@@ -31,6 +31,7 @@ import {
 } from '@mui/icons-material';
 import { useThemeMode } from '../context/ThemeContext';
 import { useTranslations } from '../i18n';
+import { getVersion } from '../services/api';
 
 const drawerWidth = 260;
 const collapsedDrawerWidth = 72;
@@ -43,6 +44,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [themeMenuAnchor, setThemeMenuAnchor] = useState<null | HTMLElement>(null);
+  const [version, setVersion] = useState<string>('');
   const navigate = useNavigate();
   const location = useLocation();
   const theme = useTheme();
@@ -50,6 +52,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const { mode, setMode, resolvedMode } = useThemeMode();
   const isDark = theme.palette.mode === 'dark';
   const t = useTranslations();
+
+  useEffect(() => {
+    getVersion().then(setVersion);
+  }, []);
 
   const currentDrawerWidth = sidebarCollapsed ? collapsedDrawerWidth : drawerWidth;
 
@@ -192,6 +198,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           <Typography variant="caption" color="text.disabled" display="block" textAlign="center">
             {t.app.copyright}
           </Typography>
+          {version && (
+            <Typography variant="caption" color="text.disabled" display="block" textAlign="center" sx={{ mt: 0.5 }}>
+              v{version}
+            </Typography>
+          )}
         </Box>
       )}
     </Box>

@@ -3,12 +3,16 @@ package api
 import (
 	"database/sql"
 	"net/http"
+	"os"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 
 	"github.com/bruno.lopes/calendar/backend/internal/api/handlers"
 )
+
+// Version is set at build time
+var Version = "dev"
 
 type Server struct {
 	db     *sql.DB
@@ -40,6 +44,15 @@ func (s *Server) setupRoutes() {
 		// Health check
 		api.GET("/health", func(c *gin.Context) {
 			c.JSON(http.StatusOK, gin.H{"status": "ok"})
+		})
+
+		// Version endpoint
+		api.GET("/version", func(c *gin.Context) {
+			version := Version
+			if v := os.Getenv("APP_VERSION"); v != "" {
+				version = v
+			}
+			c.JSON(http.StatusOK, gin.H{"version": version})
 		})
 
 		// Calendar endpoints
