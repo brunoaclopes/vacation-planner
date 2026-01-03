@@ -1,13 +1,13 @@
 {
   "categories": ["productivity", "tools"],
-  "icon_url": "https://raw.githubusercontent.com/bruno-lopes/calendar/main/frontend/public/vite.svg",
+  "icon_url": "https://raw.githubusercontent.com/brunoaclopes/vacation-planner/main/frontend/public/vite.svg",
   "screenshots": [],
   "tags": ["vacation", "planner", "calendar", "portugal"],
   "name": "vacation-planner",
   "title": "Vacation Planner",
   "description": "A Portuguese vacation planner with AI-powered optimization for maximizing your time off",
-  "home": "https://github.com/bruno-lopes/calendar",
-  "sources": ["https://github.com/bruno-lopes/calendar"],
+"home": "https://github.com/brunoaclopes/vacation-planner",
+"sources": ["https://github.com/brunoaclopes/vacation-planner"],
   "maintainers": [
     {
       "name": "Bruno Lopes",

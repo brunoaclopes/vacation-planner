@@ -28,7 +28,7 @@ questions:
                 label: "Repository"
                 schema:
                   type: string
-                  default: "ghcr.io/bruno-lopes/calendar-backend"
+                  default: "ghcr.io/brunoaclopes/vacation-planner-backend"
               - variable: tag
                 label: "Tag"
                 schema:
@@ -55,7 +55,7 @@ questions:
                 label: "Repository"
                 schema:
                   type: string
-                  default: "ghcr.io/bruno-lopes/calendar-frontend"
+                  default: "ghcr.io/brunoaclopes/vacation-planner-frontend"
               - variable: tag
                 label: "Tag"
                 schema:

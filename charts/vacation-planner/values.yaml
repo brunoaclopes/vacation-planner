@@ -3,11 +3,11 @@
 # Image settings
 image:
   backend:
-    repository: ghcr.io/bruno-lopes/calendar-backend
+    repository: ghcr.io/brunoaclopes/vacation-planner-backend
     tag: main
     pullPolicy: IfNotPresent
   frontend:
-    repository: ghcr.io/bruno-lopes/calendar-frontend
+    repository: ghcr.io/brunoaclopes/vacation-planner-frontend
     tag: main
     pullPolicy: IfNotPresent
 

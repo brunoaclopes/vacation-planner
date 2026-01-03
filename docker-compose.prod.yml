@@ -3,7 +3,7 @@
 
 services:
   backend:
-    image: ghcr.io/bruno-lopes/calendar-backend:main
+    image: ghcr.io/brunoaclopes/vacation-planner-backend:main
     container_name: vacation-planner-backend
     restart: unless-stopped
     volumes:
@@ -21,7 +21,7 @@ services:
       start_period: 10s
 
   frontend:
-    image: ghcr.io/bruno-lopes/calendar-frontend:main
+    image: ghcr.io/brunoaclopes/vacation-planner-frontend:main
     container_name: vacation-planner-frontend
     restart: unless-stopped
     ports:
