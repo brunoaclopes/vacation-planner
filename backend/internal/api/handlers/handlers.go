@@ -689,24 +689,34 @@ func (h *Handler) GetVacationSuggestions(c *gin.Context) {
 		languageInstruction = "Respond in Portuguese (Portugal). Use European Portuguese, not Brazilian Portuguese."
 	}
 
+	// Get current date for context
+	today := time.Now().Format("2006-01-02")
+	todayWeekday := time.Now().Weekday().String()
+
 	prompt := fmt.Sprintf(`You are a vacation planning advisor. Analyze the user's current manual vacation days and suggest improvements.
 
 %s
 
+TODAY'S DATE: %s (%s)
+
 CRITICAL RULES:
 - ONLY reference dates from the HOLIDAYS list below. Do NOT invent or assume any holidays.
-- ONLY suggest moving vacation days to dates in year %d.
+- ONLY suggest moving vacation days to FUTURE dates (after %s).
+- Do NOT suggest changes to vacation days that are in the past.
+- NEVER suggest placing vacation days on weekend/off days (%v) - those are already days off!
+- NEVER suggest moving a vacation day to a date where one already exists.
+- NEVER suggest moving a vacation day to a holiday - those are already days off!
 - Verify the day of week matches before suggesting (e.g., if you say "Thursday April 3rd", verify April 3rd is actually a Thursday in %d).
-- All dates must be real dates that exist in the calendar.
+- All suggested dates must be WORK DAYS (%v) that are not holidays.
 
 YEAR: %d
 WORK DAYS: %v
 WEEKEND/OFF DAYS: %v
 
-CURRENT MANUAL VACATION DAYS (these are what the user has set):
+CURRENT MANUAL VACATION DAYS (these are what the user has set - do NOT suggest these dates):
 %s
 
-OFFICIAL HOLIDAYS FOR %d (these are the ONLY holidays - do not invent others):
+OFFICIAL HOLIDAYS FOR %d (already days off - do NOT suggest these dates):
 %s
 
 TASK: Analyze the vacation day placement and provide specific suggestions. Consider:
@@ -720,7 +730,7 @@ Format your response as:
 - 2-4 specific suggestions with exact dates from the lists above
 - The potential gain for each suggestion (e.g., "5 consecutive days off instead of 3")
 
-Keep it concise. Use bullet points. Only suggest dates that are valid work days in %d.`, languageInstruction, year, year, year, config.WorkWeek, weekendDays, manualInfo.String(), year, holidayInfo.String(), year)
+Keep it concise. Use bullet points. Only suggest dates that are valid work days in %d.`, languageInstruction, today, todayWeekday, today, weekendDays, year, config.WorkWeek, year, config.WorkWeek, weekendDays, manualInfo.String(), year, holidayInfo.String(), year)
 
 	// Create AI client
 	var client *openai.Client
