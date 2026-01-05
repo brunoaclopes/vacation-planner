@@ -368,7 +368,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           }),
         }}
       >
-        {children}
+        <Box sx={{ maxWidth: 1400, mx: 'auto' }}>
+          {children}
+        </Box>
       </Box>
     </Box>
   );
