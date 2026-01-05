@@ -689,32 +689,38 @@ func (h *Handler) GetVacationSuggestions(c *gin.Context) {
 		languageInstruction = "Respond in Portuguese (Portugal). Use European Portuguese, not Brazilian Portuguese."
 	}
 
-	prompt := fmt.Sprintf(`You are a vacation planning advisor. Analyze the user's current manual vacation days and suggest how they could be improved to get more consecutive days off.
+	prompt := fmt.Sprintf(`You are a vacation planning advisor. Analyze the user's current manual vacation days and suggest improvements.
 
 %s
+
+CRITICAL RULES:
+- ONLY reference dates from the HOLIDAYS list below. Do NOT invent or assume any holidays.
+- ONLY suggest moving vacation days to dates in year %d.
+- Verify the day of week matches before suggesting (e.g., if you say "Thursday April 3rd", verify April 3rd is actually a Thursday in %d).
+- All dates must be real dates that exist in the calendar.
 
 YEAR: %d
 WORK DAYS: %v
 WEEKEND/OFF DAYS: %v
 
-CURRENT MANUAL VACATION DAYS:
+CURRENT MANUAL VACATION DAYS (these are what the user has set):
 %s
 
-HOLIDAYS (already days off):
+OFFICIAL HOLIDAYS FOR %d (these are the ONLY holidays - do not invent others):
 %s
 
-TASK: Analyze the current vacation day placement and provide specific, actionable suggestions to improve them. Consider:
-1. Are any vacation days "wasted" on days adjacent to weekends when they could bridge holidays instead?
-2. Could moving a vacation day by 1-2 days create a longer consecutive break?
-3. Are there missed opportunities to bridge holidays with weekends?
+TASK: Analyze the vacation day placement and provide specific suggestions. Consider:
+1. Are any vacation days "wasted" adjacent to weekends when they could bridge a holiday instead?
+2. Could moving a vacation day create a longer consecutive break?
+3. Are there missed opportunities to bridge LISTED holidays with weekends?
 4. Are there isolated vacation days that would be better grouped?
 
-Format your response as a helpful, friendly analysis with:
-- A brief assessment of the current placement (1-2 sentences)
-- 2-4 specific suggestions with exact dates (e.g., "Move January 2nd to April 3rd to bridge Easter with the weekend")
-- The potential gain for each suggestion (e.g., "This would give you 5 consecutive days off instead of 3")
+Format your response as:
+- A brief assessment (1-2 sentences)
+- 2-4 specific suggestions with exact dates from the lists above
+- The potential gain for each suggestion (e.g., "5 consecutive days off instead of 3")
 
-Keep the response concise and actionable. Use bullet points.`, languageInstruction, year, config.WorkWeek, weekendDays, manualInfo.String(), holidayInfo.String())
+Keep it concise. Use bullet points. Only suggest dates that are valid work days in %d.`, languageInstruction, year, year, year, config.WorkWeek, weekendDays, manualInfo.String(), year, holidayInfo.String(), year)
 
 	// Create AI client
 	var client *openai.Client
@@ -738,7 +744,7 @@ Keep the response concise and actionable. Use bullet points.`, languageInstructi
 			Messages: []openai.ChatCompletionMessage{
 				{Role: openai.ChatMessageRoleUser, Content: prompt},
 			},
-			Temperature: 0.7,
+			Temperature: 0.3,
 		},
 	)
 
