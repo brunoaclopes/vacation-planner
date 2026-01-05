@@ -657,6 +657,18 @@ func (h *Handler) GetVacationSuggestions(c *gin.Context) {
 	workCity := h.getWorkCity()
 	holidayList := holidays.GetPortugueseHolidaysWithCity(year, workCity)
 
+	// Build holiday set for quick lookup
+	holidaySet := make(map[string]bool)
+	for _, hol := range holidayList {
+		holidaySet[hol.Date] = true
+	}
+
+	// Build vacation set for quick lookup
+	vacationSet := make(map[string]bool)
+	for _, v := range manualVacations {
+		vacationSet[v.Date] = true
+	}
+
 	// Build context
 	var holidayInfo strings.Builder
 	for _, hol := range holidayList {
@@ -664,10 +676,19 @@ func (h *Handler) GetVacationSuggestions(c *gin.Context) {
 		holidayInfo.WriteString(fmt.Sprintf("- %s (%s): %s\n", hol.Date, date.Weekday().String(), hol.Name))
 	}
 
+	// Get current date first
+	today := time.Now()
+	todayStr := today.Format("2006-01-02")
+
 	var manualInfo strings.Builder
+	manualInfo.WriteString(fmt.Sprintf("(Today is %s - only FUTURE dates can be moved)\n", todayStr))
 	for _, v := range manualVacations {
 		date, _ := time.Parse("2006-01-02", v.Date)
-		manualInfo.WriteString(fmt.Sprintf("- %s (%s)\n", v.Date, date.Weekday().String()))
+		if date.After(today) || date.Format("2006-01-02") == todayStr {
+			manualInfo.WriteString(fmt.Sprintf("- %s (%s) - CAN BE MOVED\n", v.Date, date.Weekday().String()))
+		} else {
+			manualInfo.WriteString(fmt.Sprintf("- %s (%s) - IN THE PAST, cannot move\n", v.Date, date.Weekday().String()))
+		}
 	}
 
 	// Determine weekend days
@@ -683,6 +704,96 @@ func (h *Handler) GetVacationSuggestions(c *gin.Context) {
 		}
 	}
 
+	// Build list of bridge opportunity dates (work days adjacent to holidays/weekends)
+	// These are the ONLY valid dates the AI should suggest
+	
+	// Helper function to calculate consecutive days off if we add a vacation on a specific date
+	// IMPORTANT: Only counts weekends and holidays, NOT existing vacations (since we're moving them)
+	calcBreak := func(vacDate time.Time) (int, string) {
+		days := []string{}
+		
+		// Go backwards to find start of break
+		for d := vacDate.AddDate(0, 0, -1); ; d = d.AddDate(0, 0, -1) {
+			dStr := d.Format("2006-01-02")
+			wdStr := strings.ToLower(d.Weekday().String())
+			// Only count weekends and holidays, NOT existing vacations
+			isOff := !workDaySet[wdStr] || holidaySet[dStr]
+			if !isOff {
+				break
+			}
+			days = append([]string{fmt.Sprintf("%s (%s)", dStr, d.Weekday().String()[:3])}, days...)
+		}
+		
+		// Add the vacation day itself
+		days = append(days, fmt.Sprintf("%s (%s, NEW)", vacDate.Format("2006-01-02"), vacDate.Weekday().String()[:3]))
+		
+		// Go forward to find end of break
+		for d := vacDate.AddDate(0, 0, 1); ; d = d.AddDate(0, 0, 1) {
+			dStr := d.Format("2006-01-02")
+			wdStr := strings.ToLower(d.Weekday().String())
+			// Only count weekends and holidays, NOT existing vacations
+			isOff := !workDaySet[wdStr] || holidaySet[dStr]
+			if !isOff {
+				break
+			}
+			days = append(days, fmt.Sprintf("%s (%s)", dStr, d.Weekday().String()[:3]))
+		}
+		
+		return len(days), strings.Join(days, " → ")
+	}
+	
+	// Build bridge opportunities with pre-calculated break lengths
+	type bridgeOpp struct {
+		date      string
+		weekday   string
+		holiday   string
+		breakDays int
+		breakList string
+	}
+	var opportunities []bridgeOpp
+	
+	for _, hol := range holidayList {
+		holDate, _ := time.Parse("2006-01-02", hol.Date)
+		if holDate.Before(today) {
+			continue
+		}
+		
+		for offset := -3; offset <= 3; offset++ {
+			if offset == 0 {
+				continue
+			}
+			checkDate := holDate.AddDate(0, 0, offset)
+			checkDateStr := checkDate.Format("2006-01-02")
+			weekdayStr := strings.ToLower(checkDate.Weekday().String())
+			
+			if workDaySet[weekdayStr] && !holidaySet[checkDateStr] && !vacationSet[checkDateStr] && checkDate.After(today) {
+				breakDays, breakList := calcBreak(checkDate)
+				if breakDays >= 3 { // Only include if it creates at least 3 days off
+					opportunities = append(opportunities, bridgeOpp{
+						date:      checkDateStr,
+						weekday:   checkDate.Weekday().String(),
+						holiday:   hol.Name,
+						breakDays: breakDays,
+						breakList: breakList,
+					})
+				}
+			}
+		}
+	}
+	
+	// Sort by break days (descending) and deduplicate
+	seen := make(map[string]bool)
+	var bridgeOpportunities strings.Builder
+	bridgeOpportunities.WriteString("PRE-CALCULATED BRIDGE OPPORTUNITIES (take 1 vacation day, get X days off):\n")
+	for _, opp := range opportunities {
+		if seen[opp.date] {
+			continue
+		}
+		seen[opp.date] = true
+		bridgeOpportunities.WriteString(fmt.Sprintf("- Take %s (%s) off → %d consecutive days: %s\n", 
+			opp.date, opp.weekday, opp.breakDays, opp.breakList))
+	}
+
 	// Determine response language
 	languageInstruction := "Respond in English."
 	if language == "pt-PT" {
@@ -690,47 +801,31 @@ func (h *Handler) GetVacationSuggestions(c *gin.Context) {
 	}
 
 	// Get current date for context
-	today := time.Now().Format("2006-01-02")
-	todayWeekday := time.Now().Weekday().String()
+	todayWeekday := today.Weekday().String()
 
-	prompt := fmt.Sprintf(`You are a vacation planning advisor. Analyze the user's current manual vacation days and suggest improvements.
+	prompt := fmt.Sprintf(`You are a vacation planning advisor.
 
 %s
 
-TODAY'S DATE: %s (%s)
+TODAY'S DATE: %s (%s) - ONLY suggest moving vacation days that are AFTER this date!
 
-CRITICAL RULES:
-- ONLY reference dates from the HOLIDAYS list below. Do NOT invent or assume any holidays.
-- ONLY suggest moving vacation days to FUTURE dates (after %s).
-- Do NOT suggest changes to vacation days that are in the past.
-- NEVER suggest placing vacation days on weekend/off days (%v) - those are already days off!
-- NEVER suggest moving a vacation day to a date where one already exists.
-- NEVER suggest moving a vacation day to a holiday - those are already days off!
-- Verify the day of week matches before suggesting (e.g., if you say "Thursday April 3rd", verify April 3rd is actually a Thursday in %d).
-- All suggested dates must be WORK DAYS (%v) that are not holidays.
-
-YEAR: %d
-WORK DAYS: %v
-WEEKEND/OFF DAYS: %v
-
-CURRENT MANUAL VACATION DAYS (these are what the user has set - do NOT suggest these dates):
+USER'S CURRENT VACATION DAYS:
 %s
 
-OFFICIAL HOLIDAYS FOR %d (already days off - do NOT suggest these dates):
+HOLIDAYS (already days off):
 %s
 
-TASK: Analyze the vacation day placement and provide specific suggestions. Consider:
-1. Are any vacation days "wasted" adjacent to weekends when they could bridge a holiday instead?
-2. Could moving a vacation day create a longer consecutive break?
-3. Are there missed opportunities to bridge LISTED holidays with weekends?
-4. Are there isolated vacation days that would be better grouped?
+%s
+
+TASK: Look at the user's current vacation days. If any are "isolated" (not creating a long break), suggest moving them to one of the pre-calculated bridge opportunities above.
+
+The bridge opportunities already show EXACTLY how many days off you get and which days are included. Just use those numbers directly - do not recalculate.
 
 Format your response as:
-- A brief assessment (1-2 sentences)
-- 2-4 specific suggestions with exact dates from the lists above
-- The potential gain for each suggestion (e.g., "5 consecutive days off instead of 3")
+- Brief assessment of current vacation placement (1-2 sentences)
+- 2-3 suggestions: "Move [current vacation date] to [bridge date] to get [X] days off: [copy the day sequence from above]"
 
-Keep it concise. Use bullet points. Only suggest dates that are valid work days in %d.`, languageInstruction, today, todayWeekday, today, weekendDays, year, config.WorkWeek, year, config.WorkWeek, weekendDays, manualInfo.String(), year, holidayInfo.String(), year)
+Keep it concise.`, languageInstruction, todayStr, todayWeekday, manualInfo.String(), holidayInfo.String(), bridgeOpportunities.String())
 
 	// Create AI client
 	var client *openai.Client
